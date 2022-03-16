@@ -10,9 +10,12 @@ import { useHistory, useLocation } from "react-router-dom";
 import { AuthApi } from "../../api/auth";
 import { User } from "../../types/User";
 
+import Cookies from "universal-cookie";
+import { Progress, Row } from "antd";
+
+const cookies = new Cookies();
+
 interface AuthContextType {
-  // We defined the user type in `index.d.ts`, but it's
-  // a simple object with email, name and password.
   user?: User;
   loading: boolean;
   error?: any;
@@ -22,98 +25,110 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-// Export the provider as we need to wrap the entire app with it
+// Export the provider as we need to wrap the entire dashboard with it
 export function AuthProvider({
   children,
 }: {
   children: ReactNode;
 }): JSX.Element {
   const [user, setUser] = useState<User>();
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingInitial, setLoadingInitial] = useState<boolean>(true);
   const authApi = AuthApi();
-  // We are using `react-router` for this example,
-  // but feel free to omit this or use the
-  // router of your choice.
-  const history = useHistory();
   const location = useLocation();
+  const history = useHistory();
 
-  // If we change page, reset the error state.
   useEffect(() => {
     if (error) setError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // Check if there is a currently active session
-  // when the provider is mounted for the first time.
-  //
-  // If there is an error, it means there is no session.
-  //
-  // Finally, just signal the component that the initial load
-  // is over.
+  useEffect(() => {
+    const token = cookies.get("token");
+    if (!token) {
+      setLoadingInitial(false);
+      history.push("/auth");
+      return;
+    }
+    authApi
+      .getUserInfo(token)
+      .then((userInfo) => {
+        setUser(userInfo.user);
+        history.push("/dashboard");
+      })
+      .catch(() => {
+        cookies.remove("token");
+        setError(true);
+        setLoadingInitial(false);
+        history.push("/auth");
+      })
+      .finally(() => setLoadingInitial(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  //   useEffect(() => {
-  //     authApi.getCurrentUser()
-  //       .then((user) => setUser(user))
-  //       .catch((_error) => {})
-  //       .finally(() => setLoadingInitial(false));
-  //   }, []);
-
-  // Flags the component loading state and posts the login
-  // data to the server.
-  //
-  // An error means that the email/password combination is
-  // not valid.
-  //
-  // Finally, just signal the component that loading the
-  // loading state is over.
-  function login(email: string, password: string) {
+  const login = (email: string, password: string) => {
     setLoading(true);
+    setError(false);
+    authApi
+      .login({ email, password })
+      .then((res) => {
+        const { access_token, ...otherUserProps } = res.data;
+        setUser(otherUserProps);
+        cookies.set("token", access_token, { path: "/" });
+        history.push("/dashboard");
+      })
+      .catch(() => {
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  };
 
-    // authApi;
-    //   .login({ email, password })
-    //   .then((user) => {
-    //     setUser(user);
-    //     history.push("/");
-    //   })
-    //   .catch((error) => setError(error))
-    //   .finally(() => setLoading(false));
-  }
+  const logout = () => {
+    cookies.remove("token");
+  };
 
-  // Call the logout endpoint and then remove the user
-  // from the state.
-  function logout() {
-    // authApi.logout().then(() => setUser(undefined));
-  }
-
-  // Make the provider update only when it should.
-  // We only want to force re-renders if the user,
-  // loading or error states change.
-  //
-  // Whenever the `value` passed into a provider changes,
-  // the whole tree under the provider re-renders, and
-  // that can be very costly! Even in this case, where
-  // you only get re-renders when logging in and out
-  // we want to keep things very performant.
   const memoedValue = useMemo(
     () => ({
       user,
       loading,
       error,
+      loadingInitial,
       login,
       logout,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, loading, error]
+    [user, loading, error, loadingInitial]
   );
-
-  // We only want to render the underlying app after we
+  if (loadingInitial) {
+    return (
+      <Row
+        justify="center"
+        style={{
+          padding: "2em",
+        }}
+      >
+        <Progress
+          type="circle"
+          strokeColor={{
+            "0%": "#fff",
+            "100%": "#1890ff",
+          }}
+          percent={Math.floor(Math.random() * 80)}
+          format={(percent) => (
+            <span>
+              {percent}%<br />
+              <small>Loading...</small>
+            </span>
+          )}
+        />
+      </Row>
+    );
+  }
+  // We only want to render the underlying dashboard after we
   // assert for the presence of a current user.
   return (
-    <AuthContext.Provider value={memoedValue}>
-      {!loadingInitial && children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={memoedValue}>{children}</AuthContext.Provider>
   );
 }
 
