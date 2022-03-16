@@ -54,7 +54,7 @@ export function AuthProvider({
     authApi
       .getUserInfo(token)
       .then((userInfo) => {
-        setUser(userInfo.user);
+        setUser(userInfo.data);
         history.push("/dashboard");
       })
       .catch(() => {
