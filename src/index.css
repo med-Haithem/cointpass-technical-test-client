@@ -1,0 +1,7 @@
+@import "~antd/dist/antd.css";
+#root {
+  height: 100vh;
+}
+.text-align-right {
+  text-align: right;
+}

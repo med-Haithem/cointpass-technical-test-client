@@ -1,0 +1,17 @@
+.title {
+  color: #fff;
+  text-align: center;
+  margin-top: 10px;
+  font-size: 20px;
+}
+@media only screen and (max-width: 1024px) {
+  .title .text {
+    display: none;
+  }
+}
+
+.site-layout-content {
+  margin: 16px;
+  padding: 16px;
+  background-color: #fff !important;
+}
