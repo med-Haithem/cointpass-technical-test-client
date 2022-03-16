@@ -12,7 +12,6 @@ const App = () => {
           </Route>
           <Route path="/auth" component={Authentication} />
           <Route path="/dashboard" component={CurrencyDashboard} />
-
           <Route component={Authentication} />
         </Switch>
       </CommonLayout>

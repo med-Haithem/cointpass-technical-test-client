@@ -1,10 +1,11 @@
-import { Alert, Button, Col, Form, InputNumber, Row, Select } from "antd";
+import { Alert, Button, Col, Form, InputNumber, Row } from "antd";
 import { useState } from "react";
 import { CurrencyConvertApi } from "../../../../api/currency-converter";
 import { CurrencyConverter } from "../../../../types/CurrencyConverter";
+import { DashbordConversionResult } from "../conversion-result";
+import { SelectCurrenyOptions } from "../currency-selection";
 import { formItemButtonWithOutLabel, layout } from "./Layout";
 
-const supportedCurrencies = ["EUR", "USD", "GBP", "HKD"];
 type ConvertDataState = {
   convertedAmount: number;
   from: string;
@@ -23,13 +24,19 @@ export const DashboardCurrencyConvert = () => {
   const currencyConverApi = CurrencyConvertApi();
 
   const handleSubmit = (values: CurrencyConverter) => {
+    if (values.from === values.to) {
+      setConvertedData({
+        convertedAmount: values.amount,
+        ...values,
+      });
+      return;
+    }
     setLoading(true);
     setConvertedData(null);
     setError(null);
     currencyConverApi
       .convertCurrency(values)
       .then((res) => {
-        console.log("res", res);
         setConvertedData({
           convertedAmount: res.convertedAmount,
           ...values,
@@ -103,31 +110,7 @@ export const DashboardCurrencyConvert = () => {
           <Alert message="Error Occured" type="error" />
         </Col>
       ) : null}
-      {convertedData ? (
-        <Col span={24}>
-          <h2 style={{ textAlign: "center", color: "green" }}>
-            {convertedData.amount} {convertedData.from} ={" "}
-            {convertedData.convertedAmount} {convertedData.to}
-          </h2>
-        </Col>
-      ) : null}
+      {convertedData ? <DashbordConversionResult {...convertedData} /> : null}
     </Row>
-  );
-};
-
-interface SelectFromToProps {
-  value?: string;
-  onChange?: (value: string) => void;
-}
-
-const SelectCurrenyOptions = (props: SelectFromToProps) => {
-  return (
-    <Select {...props} placeholder="Select a Currency" allowClear>
-      {supportedCurrencies.map((currency) => (
-        <Select.Option key={currency} value={currency}>
-          {currency}
-        </Select.Option>
-      ))}
-    </Select>
   );
 };
