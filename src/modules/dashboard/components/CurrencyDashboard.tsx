@@ -2,7 +2,7 @@ import { Row, Col } from "antd";
 import useAuth from "../../../common/hooks/useAuth";
 import { DashboardCurrencyConvert } from "./currency-converter";
 
-export const Dashboard = () => {
+export const CurrencyDashboard = () => {
   const { user } = useAuth();
 
   return (

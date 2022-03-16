@@ -1,7 +1,7 @@
 import { Route, Switch, Redirect } from "react-router-dom";
 import { CommonLayout } from "../common/layout";
 import { AuthProvider } from "../common/hooks/useAuth";
-import { Authentication, Dashboard } from "../modules";
+import { Authentication, CurrencyDashboard } from "../modules";
 const App = () => {
   return (
     <AuthProvider>
@@ -11,7 +11,7 @@ const App = () => {
             <Redirect exact from="/" to="/auth" />
           </Route>
           <Route path="/auth" component={Authentication} />
-          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/dashboard" component={CurrencyDashboard} />
 
           <Route component={Authentication} />
         </Switch>
