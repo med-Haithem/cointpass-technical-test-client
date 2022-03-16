@@ -54,7 +54,7 @@ export function AuthProvider({
     authApi
       .getUserInfo(token)
       .then((userInfo) => {
-        setUser(userInfo.data);
+        setUser(userInfo.user);
         history.push("/dashboard");
       })
       .catch(() => {
@@ -74,7 +74,7 @@ export function AuthProvider({
       .login({ email, password })
       .then((res) => {
         const { access_token, ...otherUserProps } = res.data;
-        setUser(otherUserProps);
+        setUser({ Email: otherUserProps.email, Name: otherUserProps.name });
         cookies.set("token", access_token, { path: "/" });
         history.push("/dashboard");
       })
